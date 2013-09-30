@@ -1,0 +1,145 @@
+#######################################################
+# VIM 
+#######################################################
+#
+# Scenario:
+# Install vim text editor and CFEngine highlighting syntax
+# on linux OSes. Uses git files from Neil Watson.
+# Alternatively use curl to fetch files - no need to install
+# wget then.
+#
+# Author: Jurica Borozan
+# Version: 1.0.0
+#
+
+
+##
+## When testing (or running) uncoment
+##
+#body common control
+#{
+# bundlesequence => { "install_vim" };
+# inputs => { "/var/cfengine/inputs/libraries/cfengine_stdlib.cf" };
+#}
+
+##
+##
+##
+bundle agent install_vim
+{
+ vars:
+
+  linux::
+
+   "vim_pkgs" slist => { "vim" };
+
+   "wget_pkgs" slist => { "wget" };
+
+# CFEngine syntax highlighting files
+   "params[ftplugin_vim_cf3][master_url]" string => "https://raw.github.com/neilhwatson/vim_cf3/master/ftplugin/cf3.vim";
+   "params[ftplugin_vim_cf3][file]" string => "/usr/share/vim/vimfiles/ftplugin/cf3.vim";
+
+   "params[doc_cf3_txt][master_url]" string => "https://raw.github.com/neilhwatson/vim_cf3/master/doc/cf3.txt";
+   "params[doc_cf3_txt][file]" string => "/usr/share/vim/vimfiles/doc/cf3.txt";
+
+   "params[syntax_cf3_vim][master_url]" string => "https://raw.github.com/neilhwatson/vim_cf3/master/syntax/cf3.vim";
+   "params[syntax_cf3_vim][file]" string => "/usr/share/vim/vimfiles/syntax/cf3.vim";
+
+   "inds" slist => getindices("params");
+
+
+ classes:
+
+  linux::
+
+   "have_wget" expression => fileexists("/usr/bin/wget");
+
+#   "have_curl" expression => fileexists("/usr/bin/curl");
+
+   "have_cf3_files" expression => fileexists("$(params[ftplugin_vim_cf3][file])");
+
+
+ packages:
+
+# if needed install it first
+
+  linux::
+
+   "$(vim_pkgs)"
+
+             comment => "Install vim",
+      package_policy => "add",
+      package_method => generic,
+             classes => if_repaired("vim_installed");
+
+
+# if needed install wget too
+
+  linux.!have_wget::
+
+   "$(wget_pkgs)"
+
+             comment => "Install wget",
+      package_policy => "add",
+      package_method => generic,
+             classes => if_repaired("wget_installed");
+
+
+ files:
+
+# after fetching vim syntax highlighting files move them to proper place
+
+  linux.fetched_cf3_files::
+
+   "$(params[$(inds)][file])"
+      comment => "Setting up vim syntax highlighting files for CFEnfine",
+    copy_from => local_cp("/tmp/$(inds)");
+
+
+  linux::
+
+   "/etc/vimrc"
+       comment => "Change vimrc default configuration file",
+     edit_line => restore_etc_vimrc;
+
+
+ commands:
+
+# if syntax highlighting files not present fetch them via wget first
+
+  linux.have_wget.!have_cf3_files::
+
+   "/usr/bin/wget -nv -O /tmp/$(inds) $(params[$(inds)][master_url])"
+    comment => "Fetching vim syntax highlighting files for CFEnfine",
+    classes => if_ok("fetched_cf3_files");
+
+#  linux.have_curl.!have_cf3_files::
+#
+#   "/usr/bin/curl -s -L -o /tmp/$(inds) $(params[$(inds)][master_url])"
+#    comment => "Fetching vim syntax highlighting files for CFEnfine",
+#    classes => if_ok("fetched_cf3_files");
+
+}
+
+##
+##
+##
+bundle edit_line restore_etc_vimrc
+{
+ delete_lines:
+  "au\s+BufRead.*cf3";
+
+ insert_lines:
+  "au BufRead,BufNewFile *.cf set ft=cf3"
+   location => user_append;
+
+}
+
+##
+##
+##
+body location user_append 
+{
+ before_after => "after";
+}
+
