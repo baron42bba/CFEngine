@@ -1,0 +1,133 @@
+#######################################################
+# AWS CLI
+#######################################################
+#
+# Install and setup AWS CLI from bundle archive.
+#
+# Original author: Jurica Borozan
+# Version: 1.0.0
+#
+
+
+##
+## When testing or running separately uncoment
+##
+#body common control
+#{
+#  any::
+#    bundlesequence => { "jb_def",  "jb_awscli_install" };
+#  cfengine_3_4::
+#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
+#  !(cfengine_3_4|cfengine_3_5)::
+#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.libdir)/stdlib.cf" };
+#}
+
+##
+##
+##
+bundle agent jb_awscli_install
+{
+  meta:
+    "tags" slist => { "autorun" };
+
+ vars:
+
+  linux::
+
+   "tool_pkgs"        slist => { 
+                                 "unzip",
+                                 "wget",
+#                                 "curl",
+                                 "python",
+                               };
+
+   "awscli_url" string => "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip";
+
+   "awscli_archive"     string => "/tmp/awscli-bundle.zip";
+   "awscli_install_dir" string => "/tmp/awscli-bundle";
+
+   "install_location" string => "/usr/local/aws";
+   "bin_location"     string => "/usr/local/bin/aws";
+
+
+ classes:
+
+  linux::
+
+   "no_awscli"          not => fileexists("$(bin_location)");
+
+   "have_awscli_archive"      expression => fileexists("$(awscli_archive)");
+   "have_awscli_install_dir"  expression => fileexists("$(awscli_install_dir)");
+
+
+ packages:
+
+# if needed tools install them first
+
+  linux::
+
+   "$(tool_pkgs)"
+
+             comment => "Install $(tool_pkgs)",
+      package_policy => "add",
+      package_method => generic,
+             classes => if_repaired("have_$(tool_pkgs)");
+
+
+ commands:
+
+  linux.no_awscli::
+
+# fetch it 
+
+   "/usr/bin/wget -nv -O $(awscli_archive) $(awscli_url)"
+    comment => "Fetching awscli",
+    contain => in_dir("/tmp"),
+    classes => if_ok("awscli_fetched");
+
+#  linux.no_awscli::
+#
+#   "/usr/bin/curl -s -L -o $(awscli_archive) $(awscli_url)"
+#    comment => "Fetching awscli",
+#    contain => in_dir("/tmp"),
+#    classes => if_ok("awscli_fetched");
+
+  linux.awscli_fetched::
+
+# unpack it
+
+   "/usr/bin/unzip $(awscli_archive)"
+    comment => "Unpacking awscli",
+    contain => in_dir_shell("/tmp"),
+    classes => if_ok("awscli_unpacked");
+
+  linux.awscli_unpacked::
+
+# install it
+
+   "/usr/bin/python $(awscli_install_dir)/install -i $(install_location) -b $(bin_location)"
+    comment => "Installing awscli",
+    contain => in_dir_shell("$(awscli_install_dir)"),
+    classes => if_ok("awscli_installed");
+
+  linux.awscli_installed::
+
+# clean it
+
+   "/usr/bin/rm -fr $(awscli_archive) $(awscli_install_dir)"
+    comment => "Removing archive and installation files",
+    classes => if_ok("awscli_cleaned"),
+    ifvarclass => "redhat7|centos7";
+
+   "/bin/rm -fr $(awscli_archive) $(awscli_install_dir)"
+    comment => "Removing archive and installation files",
+    classes => if_ok("awscli_cleaned"),
+    ifvarclass => "redhat6|centos6";
+
+}
+
+

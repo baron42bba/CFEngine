@@ -1,0 +1,87 @@
+#######################################################
+# AWS CLI
+#######################################################
+#
+# Setup AWS CLI.
+#
+# Original author: Jurica Borozan
+# Version: 1.0.0
+#
+
+
+##
+## When testing or running separately uncoment
+##
+#body common control
+#{
+#  any::
+#    bundlesequence => { "jb_awscli_init" };
+#  cfengine_3_4::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
+#  !(cfengine_3_4|cfengine_3_5)::
+#    inputs => { "$(sys.libdir)/stdlib.cf" };
+#}
+
+##
+##
+##
+bundle agent jb_awscli_init
+{
+  meta:
+    "tags" slist => { "autorun" };
+
+  vars:
+
+    linux::
+
+      "awscli_config_dir" string => "/root/.aws";
+
+      "awscli_credentials_master" string => "/var/cfengine/repository/aws/credentials";
+      "awscli_credentials_file"   string => "$(awscli_config_dir)/credentials";
+     
+      "awscli_config_master" string => "/var/cfengine/repository/aws/config";
+      "awscli_config_file"   string => "$(awscli_config_dir)/config";
+
+
+  classes:
+
+    linux::
+    
+     "no_awscli_credentials" not => fileexists("$(awscli_credentials_file)");
+     "no_awscli_config"      not => fileexists("$(awscli_config_file)");
+
+
+  files:
+
+    linux::
+
+      "$(awscli_config_dir)/."
+          comment => "Create config and credentials directory",
+            perms => m("u+rwx"),
+           create => "true";
+
+    linux.no_awscli_config::
+
+# fetch login configuration file
+      "$(awscli_config_file)"
+           comment => "Copy $(awscli_config_file) file from server",
+         copy_from => remote_cp("$(awscli_config_master)","$(sys.policy_hub)"),
+             perms => m("u+rw"),
+           classes => if_ok_cancel("no_awscli_config");
+
+    linux.no_awscli_credentials::
+
+# fetch login credentials file
+      "$(awscli_credentials_file)"
+           comment => "Copy $(awscli_credentials_file) file from server",
+         copy_from => remote_cp("$(awscli_credentials_master)","$(sys.policy_hub)"),
+             perms => m("u+rw"),
+           classes => if_ok_cancel("no_awscli_credentials");
+       
+}
+
+
