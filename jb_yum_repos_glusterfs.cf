@@ -1,0 +1,60 @@
+#######################################################
+# Add GluserFS EPEL repository
+#######################################################
+#
+#
+# Install GluserFS EPEL repository
+#
+# Author: Jurica Borozan
+# Version: 1.0.0
+#
+
+##
+## When testing uncomment
+##
+#body common control
+#{
+#  any::
+#    bundlesequence => { "jb_yum_repos_glusterfs" };
+#  cfengine_3_4::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
+#  !(cfengine_3_4|cfengine_3_5)::
+#    inputs => { "$(sys.libdir)/stdlib.cf" };
+#}
+
+##
+##
+##
+bundle agent jb_yum_repos_glusterfs
+{
+  meta:
+    "tags" slist => { "autorun" };
+
+  vars:
+
+    redhat|centos::
+
+      "glusterfs_repos_file" string => "/etc/yum.repos.d/glusterfs-epel.repo";
+      "glusterfs_repos_url"  string => "http://download.gluster.org/pub/gluster/glusterfs/LATEST/EPEL.repo/glusterfs-epel.repo";
+
+
+  classes:
+
+    redhat|centos::
+
+      "no_glusterfs_repos_file" not => fileexists("$(glusterfs_repos_file)");
+
+
+  commands:
+
+    no_glusterfs_repos_file.(centos|redhat)::
+
+      "/usr/bin/wget $(glusterfs_repos_url) -O $(glusterfs_repos_file)"
+        comment => "Setup GlusterFS EPEL repository";
+
+}
+

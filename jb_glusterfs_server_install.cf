@@ -1,0 +1,61 @@
+#######################################################
+# GlusterFS for server/peer node
+#######################################################
+#
+# Install GlusterFS for server.
+#
+# Original author: Jurica Borozan
+# Version: 1.0.0
+#
+
+
+##
+## When testing uncomment
+##
+#body common control
+#{
+#  any::
+#    bundlesequence => { "jb_glusterfs_server_install" };
+#  cfengine_3_4::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#  cfengine_3_5::
+#    inputs => { "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
+#  !(cfengine_3_4|cfengine_3_5)::
+#    inputs => { "$(sys.libdir)/stdlib.cf" };
+#}
+
+##
+##
+##
+bundle agent jb_glusterfs_server_install
+{
+  meta:
+    "tags" slist => { "autorun" };
+
+  vars:
+
+    centos|redhat::
+
+      "pkgs" slist => {
+                        "glusterfs-server",
+                      };
+
+
+# install packages
+
+  packages:
+
+    linux::
+
+      "$(pkgs)"
+               comment => "Install GlusterFS server",
+        package_policy => "add",
+        package_method => generic,
+               classes => if_repaired("glusterfs_installed");
+
+
+}
+
+

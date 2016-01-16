@@ -10,20 +10,20 @@
 
 
 ##
-## When testing or running separately uncoment
+## When testing or running separately uncomment
 ##
 #body common control
 #{
 #  any::
-#    bundlesequence => { "jb_def",  "jb_awscli_install" };
+#    bundlesequence => { "jb_awscli_install" };
 #  cfengine_3_4::
-#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
 #  cfengine_3_5::
-#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
+#    inputs => { "$(sys.workdir)/inputs/libraries/cfengine_stdlib.cf" };
 #  cfengine_3_5::
-#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
+#    inputs => { "$(sys.workdir)/inputs/lib/3.5/paths.cf", "$(sys.workdir)/inputs/lib/3.5/common.cf", "$(sys.workdir)/inputs/lib/3.5/commands.cf", "$(sys.workdir)/inputs/lib/3.5/packages.cf", "$(sys.workdir)/inputs/lib/3.5/files.cf", "$(sys.workdir)/inputs/lib/3.5/services.cf", "$(sys.workdir)/inputs/lib/3.5/processes.cf", "$(sys.workdir)/inputs/lib/3.5/storage.cf", "$(sys.workdir)/inputs/lib/3.5/databases.cf", "$(sys.workdir)/inputs/lib/3.5/monitor.cf", "$(sys.workdir)/inputs/lib/3.5/guest_environments.cf", "$(sys.workdir)/inputs/lib/3.5/bundles.cf", "$(sys.workdir)/inputs/lib/3.5/reports.cf", "$(sys.workdir)/inputs/lib/3.5/cfe_internal.cf" };
 #  !(cfengine_3_4|cfengine_3_5)::
-#    inputs => { "./jb_def.cf", "./jb_lib.cf", "$(sys.libdir)/stdlib.cf" };
+#    inputs => { "$(sys.libdir)/stdlib.cf" };
 #}
 
 ##
